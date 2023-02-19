@@ -1,0 +1,1 @@
+{"name":"Local: temp","url":"/home/sai/Desktop/cc ass/temp.cpp","tests":[{"id":1676040783663,"input":"((((a)(a))+)(b))\naaaabaaabbaab","output":"$aaaab@a$aab@b$aab#"}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"/home/sai/Desktop/cc ass/temp.cpp","group":"local","local":true}

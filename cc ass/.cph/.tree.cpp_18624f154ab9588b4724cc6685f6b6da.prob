@@ -1,0 +1,1 @@
+{"name":"Local: tree","url":"/home/sai/Desktop/cc ass/tree.cpp","tests":[{"id":1676040596724,"input":"((((a)(a))+)(b))","output":""}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"/home/sai/Desktop/cc ass/tree.cpp","group":"local","local":true}
