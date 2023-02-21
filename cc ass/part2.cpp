@@ -12,7 +12,15 @@ struct Node
     }
 };
 
-
+void inOrder(Node *r)
+{
+    // l R r
+    if (r == NULL)
+        return;
+    inOrder(r->left);
+    cout << r->data << " ";
+    inOrder(r->right);
+}
 
 Node *build(string s, int start, int end)
 {
@@ -67,10 +75,22 @@ Node *build(string s, int start, int end)
     return NULL;
 }
 
+Node *inserthash(Node *root)
+{
+    // while (root->right != NULL)
+    // {
+    //     root = root->right;
+    // }
+    // root->right = new Node('#');
+    Node *temp = new Node('.');
+    temp->right = new Node('#');
+    temp->left = root;
+    return temp;
+}
 
 struct state
 {
-    
+    // for a given character a or b possible stansitions to other states
     map<char, set<state *>> transition;
     int id;
     state(int x)
@@ -102,7 +122,7 @@ nfa *buildNFA(Node *root)
         mynfa->start = s1;
         mynfa->endStates.insert(s2);
         s1->transition[root->data].insert(s2);
-
+        // cout<<"building a"<<endl;
         return mynfa;
     }
 
@@ -138,7 +158,7 @@ nfa *buildNFA(Node *root)
         {
             it->transition['e'].insert(s2);
         }
-
+        // cout<< "building |"<<endl;
         return mynfa;
     }
     if (root->data == '*')
@@ -149,14 +169,20 @@ nfa *buildNFA(Node *root)
         nfa *mleft = buildNFA(root->left);
         s1->transition['e'].insert(s1);
         s2->transition['e'].insert(s2);
+
         mynfa->states.insert(s1);
         mynfa->states.insert(s2);
         for (auto &it : mleft->states)
         {
             mynfa->states.insert(it);
         }
+
         mynfa->start = s1;
+
         mynfa->endStates.insert(s2);
+        // mynfa ->endStates.insert(s1);
+
+        // s2->transition['e'].insert(s1);
         s1->transition['e'].insert(mleft->start);
         s1->transition['e'].insert(s2);
         for (auto &it : mleft->endStates)
@@ -164,7 +190,7 @@ nfa *buildNFA(Node *root)
             it->transition['e'].insert(s2);
             it->transition['e'].insert(mleft->start);
         }
-    
+        // cout<<"building *"<<endl;
         return mynfa;
     }
     if (root->data == '+')
@@ -186,15 +212,17 @@ nfa *buildNFA(Node *root)
         mynfa->start = s1;
 
         mynfa->endStates.insert(s2);
+        // mynfa ->endStates.insert(s1);
 
+        // s2->transition['e'].insert(s1);
         s1->transition['e'].insert(mleft->start);
-     
+        // s1->transition['e'].insert(s2);
         for (auto &it : mleft->endStates)
         {
             it->transition['e'].insert(s2);
             it->transition['e'].insert(mleft->start);
         }
-        
+        // cout<<"building *"<<endl;
         return mynfa;
     }
     if (root->data = '.')
@@ -234,7 +262,7 @@ nfa *buildNFA(Node *root)
         {
             it->transition['e'].insert(s2);
         }
-       
+        // cout<<"building dot"<<endl;
         return mynfa;
     }
 
@@ -315,6 +343,29 @@ string nfastring(string match)
     return x;
 }
 
+void runner(nfa *machine, string s, int start, int end, string &ans)
+{
+
+    if (start > end)
+    {
+        return;
+    }
+    for (int i = end; i >= start; i--)
+    {
+        bool x = runNFA(machine, machine->start, nfastring(s.substr(start, i - start + 1)));
+        if (x)
+        {
+            // cout<<"$"<<s.substr(start,i-start+1);
+            ans = ans + "$" + s.substr(start, i - start + 1);
+            runner(machine, s, i + 1, end, ans);
+            return;
+        }
+    }
+    // cout<<"@"<<s[start];
+    ans = ans + "@" + s[start];
+    runner(machine, s, start + 1, end, ans);
+    return;
+}
 
 void doit(vector<nfa *> machs, string s, int start, int end, string &ans, string unm)
 {
@@ -327,9 +378,7 @@ void doit(vector<nfa *> machs, string s, int start, int end, string &ans, string
         ans += "#";
         return;
     }
-    int length  = -1;
-    int pos;
-    int mach;
+    map<int, pair<int, int>> matches;
     for (int j = 0; j < machs.size(); j++)
     {
         for (int i = end; i >= start; i--)
@@ -337,19 +386,24 @@ void doit(vector<nfa *> machs, string s, int start, int end, string &ans, string
             bool x = runNFA(machs[j], machs[j]->start, nfastring(s.substr(start, i - start + 1)));
             if (x)
             {
-                
-                if(i-start+1 > length){
-                        length = i-start+1;
-                        pos = i;
-                        mach = j;
-                    }
+                // cout<<"$"<<s.substr(start,i-start+1);
+                matches.insert({i - start + 1, {j, i}});
+                // cout<<"matched by machine "<<j +1<<" " <<s.substr(start,i-start+1) <<" from "<<start <<" to " << i <<endl;
+                // if(unm.size() != 0){
+                //     ans = ans +  "@"+unm;
+                // }
 
+                // ans = ans + "$";
+                // ans.push_back(j+'0'+1);
+
+                // doit(machs,s,i+1,end,ans,"");
+                // return;
                 break;
             }
         }
     }
-
-    if (length == -1)
+    // cout<<"not match"<<endl;
+    if (matches.size() == 0)
     {
         unm += s[start];
         doit(machs, s, start + 1, end, ans, unm);
@@ -362,9 +416,12 @@ void doit(vector<nfa *> machs, string s, int start, int end, string &ans, string
             ans = ans + "@" + unm;
         }
         ans = ans + "$";
-
+        auto it = matches.end();
+        it--;
+        int mach = it->second.first;
         ans.push_back(mach + '0' + 1);
-        doit(machs, s, pos + 1, end, ans, "");
+        int i = it->second.second;
+        doit(machs, s, i + 1, end, ans, "");
         return;
     }
 }
@@ -382,12 +439,12 @@ int main()
     for (int i = 1; i <= n; i++)
     {
         getline(inputFile, ms[i - 1]);
-
+        // cout<<ms[i-1]<<endl;
     }
 
     string input;
     getline(inputFile, input);
-
+    // cout<<input;
 
     vector<nfa *> machines(n);
     vector<Node *> roots(n);
@@ -400,7 +457,7 @@ int main()
 
     string ans = "";
     doit(machines, input, 0, input.size() - 1, ans, "");
-  
+    // cout<<ans<<endl;
     ofstream outputFile;
 
     outputFile.open("output.txt");
