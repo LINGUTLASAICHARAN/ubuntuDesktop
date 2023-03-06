@@ -316,10 +316,14 @@ string nfastring(string match)
 }
 
 
-void doit(vector<nfa *> machs, string s, int start, int end, string &ans)
+void doit(vector<nfa *> machs, string s, int start, int end, string &ans, string unm)
 {
     if (start > end)
     {
+        if (unm.size() != 0)
+        {
+            ans += "@" + unm;
+        }
         ans += "#";
         return;
     }
@@ -347,17 +351,20 @@ void doit(vector<nfa *> machs, string s, int start, int end, string &ans)
 
     if (length == -1)
     {
-        ans = ans + "@"+s[start];
-        doit(machs, s, start + 1, end, ans);
+        unm += s[start];
+        doit(machs, s, start + 1, end, ans, unm);
         return;
     }
     else
     {
-
+        if (unm.size() != 0)
+        {
+            ans = ans + "@" + unm;
+        }
         ans = ans + "$";
 
         ans.push_back(mach + '0' + 1);
-        doit(machs, s, pos + 1, end, ans);
+        doit(machs, s, pos + 1, end, ans, "");
         return;
     }
 }
@@ -392,7 +399,7 @@ int main()
     }
 
     string ans = "";
-    doit(machines, input, 0, input.size() - 1, ans);
+    doit(machines, input, 0, input.size() - 1, ans, "");
   
     ofstream outputFile;
 
